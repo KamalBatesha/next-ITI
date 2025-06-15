@@ -6,7 +6,8 @@ function AddUser() {
     const router=useRouter()
 
     const addUser=async(e)=>{
-        e.preventDefault()
+       try{
+         e.preventDefault()
         const newUser={
             name:e.target.user_name.value,
             email:e.target.email.value,
@@ -19,8 +20,13 @@ function AddUser() {
             headers:{"Content-Type":"application/json"},
             body:JSON.stringify(newUser)
         })
+
         const data=await res.json()
+        console.log(data)
         router.push("/")
+       }catch(err){
+           console.log(err)
+       }
     }
   return (
     <div>

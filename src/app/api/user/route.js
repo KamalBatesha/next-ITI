@@ -1,50 +1,70 @@
+import { dbConnection } from "@/app/_lib/dbConnection"
 import {users} from "./usersData"
+// import { UserModel } from "@/app/_lib/models/userModel"
+import { addUserValadation, editUserValadation } from "./userValadation"
+import { UserModel } from "@/app/_lib/models/userModel"
+
+dbConnection()
 export async function GET(){
-    return new Response(JSON.stringify(users))
+    let allusers= await UserModel.find({})
+    return new Response(JSON.stringify({data:allusers}),{status:200})
 }
 
 export async function POST(request){
-    const {name, email, city,suite,street} = await request.json()
-    const user = {
-        id: users[users.length - 1].id + 1,
-        name,
-        email,
-        address: {
-            street,
-            suite,
-            city,
-        }
+    try{
+        const user = await request.json()
+    console.log(user);
+    
+    const valadation=addUserValadation.safeParse(user)
+    if(!valadation.success){
+        return new Response(JSON.stringify({error:valadation.error}),{status:400})
     }
-    users.push(user)
-    return new Response(JSON.stringify(user))
+    const newUser = await UserModel.create({
+        name:user.name,
+        email:user.email,
+        address:{
+            city:user.city,
+            street:user.street,
+            suite:user.suite
+        }
+    })
+    console.log(newUser);
+    
+    return new Response(JSON.stringify({data:newUser}),{status:201})
+    }catch(err){
+        return new Response(JSON.stringify({error:err}),{status:500})
+    }
 }
 
 export async function PUT(request){
-    const {name, email, city,suite,street,id} = await request.json()
-    const userIndex = users.findIndex(user => user.id == id)
-    if(userIndex == -1){
+    try{
+        const {name, email, city,suite,street,id} = await request.json()
+        const valadation=editUserValadation.safeParse({name, email, city,suite,street,id})
+    if(!valadation.success){
+        return new Response(JSON.stringify({error:valadation.error}),{status:400})
+    }
+    const user = UserModel.findById(id)
+    if(!user){
         return new Response(JSON.stringify({error: "User not found"}), {status: 404})
     }
-    const UpdatedUser = {
-        id: id,
-        name:name||users[userIndex].name,
-        email:email||users[userIndex].email,
-        address: {
-            street:street||users[userIndex].address.street,
-            suite:suite||users[userIndex].address.suite,
-            city:city||users[userIndex].address.city,
-        }
+    const UpdatedUser = await UserModel.findByIdAndUpdate(id,{name,email,city,suite,street},{new:true})
+    return new Response(JSON.stringify({data:UpdatedUser}),{status:200})
+    }catch(err){
+        return new Response(JSON.stringify({error:err}),{status:500})
     }
-    users[userIndex] = UpdatedUser
-    return new Response(JSON.stringify(UpdatedUser))
+    
 }
 
 export async function DELETE(request){
-    const {id} = await request.json()
-    const userIndex = users.findIndex(user => user.id == id)
-    if(userIndex == -1){
-        return new Response(JSON.stringify({error: "User not found"}), {status: 404})
+    try{
+        const {id} = await request.json()
+        const user = UserModel.findById(id)
+        if(!user){
+            return new Response(JSON.stringify({error: "User not found"}), {status: 404})
+        }
+        const deletedUser = await UserModel.findByIdAndDelete(id)
+        return new Response(JSON.stringify({data:deletedUser}),{status:200})
+    }catch(err){
+        return new Response(JSON.stringify({error:err}),{status:500})
     }
-    users.splice(userIndex, 1)
-    return new Response(JSON.stringify({message: "User deleted successfully"}))
 }

@@ -11,7 +11,7 @@ export default function Home() {
     try {
       const res = await fetch("http://localhost:3000/api/user");
       const users = await res.json();
-      setUsers(users);
+      setUsers(users.data);
     } catch (err) {
       console.error("Failed to fetch users:", err);
     }
@@ -65,7 +65,7 @@ export default function Home() {
           <ul role="list" className="divide-y divide-gray-200 dark:divide-gray-700">
             {users.length > 0 &&
               users.map((user) => (
-                <UserCard key={user.id} {...user} fetchUsers={fetchUsers} handleEdit={handleEdit} editId={editId} setEditId={setEditId} handleDelete={handleDelete} />
+                <UserCard key={user._id} {...user} fetchUsers={fetchUsers} handleEdit={handleEdit} editId={editId} setEditId={setEditId} handleDelete={handleDelete} />
               ))}
           </ul>
         </div>
